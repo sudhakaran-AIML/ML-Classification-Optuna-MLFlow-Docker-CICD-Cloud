@@ -1,0 +1,32 @@
+# DVC Ignore Patterns
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# MLFlow
+mlruns/
+.mlflow/
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Temporary files
+*.tmp
+*.bak
