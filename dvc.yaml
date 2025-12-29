@@ -1,0 +1,60 @@
+stages:
+  data_ingestion:
+    cmd: python -c "from src.data_ingestion import DataIngestion; di = DataIngestion(); di.run()"
+    deps:
+      - src/data_ingestion.py
+      - config/config.yaml
+    outs:
+      - data/iris_raw.csv
+    
+  data_preprocessing:
+    cmd: python -c "from src.data_ingestion import DataIngestion; from src.data_preprocessing import DataPreprocessing; di = DataIngestion(); f, t = di.load_raw_data(); dp = DataPreprocessing(); dp.run(f, t)"
+    deps:
+      - src/data_preprocessing.py
+      - data/iris_raw.csv
+      - config/config.yaml
+    outs:
+      - data/iris_processed.csv
+  
+  data_transformation:
+    cmd: python -c "from src.data_ingestion import DataIngestion; from src.data_preprocessing import DataPreprocessing; from src.data_transformation import DataTransformation; di = DataIngestion(); f, t = di.load_raw_data(); dp = DataPreprocessing(); fc, tc = dp.preprocess_data(f, t); dt = DataTransformation(); dt.run(fc, tc)"
+    deps:
+      - src/data_transformation.py
+      - data/iris_processed.csv
+      - config/config.yaml
+    outs:
+      - data/train.csv
+      - data/test.csv
+      - models/scaler.pkl
+      - models/label_encoder.pkl
+  
+  model_training:
+    cmd: python train.py
+    deps:
+      - src/model_building.py
+      - src/feature_engineering.py
+      - data/train.csv
+      - data/test.csv
+      - config/config.yaml
+    params:
+      - config/config.yaml:
+          - optuna.n_trials
+          - optuna.direction
+          - model.objective
+    outs:
+      - models/best_model.pkl
+      - models/best_params.yaml
+    metrics:
+      - plots/metrics.json:
+          cache: false
+  
+  model_evaluation:
+    cmd: python -c "from src.prediction import Prediction; from src.model_evaluation import ModelEvaluation; from src.data_transformation import DataTransformation; import pandas as pd; pred = Prediction(); pred.load_artifacts(); test_data = pd.read_csv('data/test.csv'); X_test = test_data.drop(columns=['species']); y_test_orig = test_data['species']; dt = DataTransformation(); y_test_enc = dt.label_encoder.fit_transform(y_test_orig); eval = ModelEvaluation(); eval.run(pred.model, X_test, y_test_enc, class_names=dt.label_encoder.classes_.tolist(), feature_names=X_test.columns.tolist())"
+    deps:
+      - src/model_evaluation.py
+      - models/best_model.pkl
+      - data/test.csv
+    outs:
+      - plots/confusion_matrix.png
+      - plots/feature_importance.png
+      - plots/classification_report.json

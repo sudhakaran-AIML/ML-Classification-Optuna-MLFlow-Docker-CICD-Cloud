@@ -1,0 +1,104 @@
+# Configuration for Iris Classification ML Application
+
+# Data Configuration
+data:
+  dataset_name: "iris"
+  target_column: "species"
+  test_size: 0.2
+  random_state: 42
+  stratify: true
+
+# Feature Engineering
+features:
+  scaling_method: "standard"  # standard, minmax, robust
+  create_interactions: false
+  polynomial_degree: 1
+
+# Model Configuration
+model:
+  name: "xgboost"
+  objective: "multi:softmax"
+  num_class: 3
+  eval_metric: "mlogloss"
+
+# Optuna Hyperparameter Search
+optuna:
+  n_trials: 50
+  direction: "maximize"
+  metric: "accuracy"
+  timeout: 600  # seconds
+  sampler: "TPESampler"
+  
+  # Hyperparameter search space
+  search_space:
+    learning_rate:
+      type: "float"
+      low: 0.01
+      high: 0.3
+      log: true
+    max_depth:
+      type: "int"
+      low: 3
+      high: 10
+    n_estimators:
+      type: "int"
+      low: 50
+      high: 300
+    subsample:
+      type: "float"
+      low: 0.6
+      high: 1.0
+    colsample_bytree:
+      type: "float"
+      low: 0.6
+      high: 1.0
+    gamma:
+      type: "float"
+      low: 0.0
+      high: 5.0
+    min_child_weight:
+      type: "int"
+      low: 1
+      high: 10
+
+# MLFlow Configuration
+mlflow:
+  tracking_uri: "file:./mlruns"
+  experiment_name: "iris_classification_xgboost"
+  run_name_prefix: "xgb_optuna"
+  log_models: true
+  log_artifacts: true
+
+# Paths
+paths:
+  data_dir: "data"
+  models_dir: "models"
+  logs_dir: "logs"
+  plots_dir: "plots"
+  raw_data: "data/iris_raw.csv"
+  processed_data: "data/iris_processed.csv"
+  train_data: "data/train.csv"
+  test_data: "data/test.csv"
+  model_file: "models/best_model.pkl"
+  scaler_file: "models/scaler.pkl"
+
+# Logging
+logging:
+  version: 1
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  datefmt: "%Y-%m-%d %H:%M:%S"
+
+# Gradio App
+gradio:
+  server_name: "0.0.0.0"
+  server_port: 7860
+  share: false
+  debug: false
+
+# EDA Configuration
+eda:
+  generate_plots: true
+  plot_formats: ["png", "pdf"]
+  figure_size: [10, 8]
+  dpi: 300
